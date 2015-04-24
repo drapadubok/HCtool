@@ -31,7 +31,7 @@ pip install -r req.txt
 
 # How to use
 
-1) All parameters are defined in nilearnDima.py
+1) All parameters are defined in nilearnDima.py, to run basic version, just look up what each parameter means and replace with value that fits your case. I can provide detailed guide on request, this repo is just to keep the code.
 
 2) Pipelines.py contains the script of analysis, there are currently three versions:
 -single-subject classification
