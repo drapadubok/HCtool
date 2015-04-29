@@ -1,6 +1,7 @@
 # HCtool
 Hyperclassification tools for two-person neuroscience.
 This toolbox is used to perform cross-individual classification of fMRI data with additional functional realignment step. For example, we have a person, who was picking up either a ball, or a pen from table, while being scanned in fMRI. We take brain image every two seconds. Another person observed, how the first person was performing actions, and was also scanned in fMRI. The goal for us is to check, whether brain activity of actor (person who picked objects) is similar enough to brain activity of observer, so that machine learning algorithm trained on brain data of actor, can recognize which action was observed from observer's brain data. 
+
 I use numpy, nilearn, sklearn and nibabel for data preprocessing, Bayesian CCA from CCAGFA R package, interfaced through rpy2 to perform functional realignment, and logistic regression from sklearn for classification. The whole pipeline is parallelized in naive MapReduce framework using Triton cluster (Slurm).
 
 
