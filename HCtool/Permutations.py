@@ -2,6 +2,7 @@
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+
 # Here modified By Dmitry Smirnov
 
 from __future__ import print_function
@@ -22,10 +23,23 @@ from sklearn.cross_validation import _check_cv
 
 plt.ioff()
 
-def GetPermutations(cls,data_test,labels,crossval,data_train=None,
+def get_permutations(cls,data_test,labels,crossval,data_train=None,
                     scoring=None,n_permutations=1000,n_jobs=-1,
                     **kwargs):
-    ''' Wrapper for permutations '''
+    ''' Wrapper for permutations.
+    Input
+        cls : 
+        data_test :
+        labels : 
+        crossval : 
+        data_train :
+        scoring : 
+        n_permutations : 
+        n_jobs : 
+        
+    Output
+        null_cv_scores : dict from permutation_test_score
+    '''
     null_cv_scores = permutation_test_score(estimator = cls,
                                             X = data_test,
                                             data_train = data_train,
@@ -68,6 +82,9 @@ def permutation_test_score(estimator, X, y, data_train=None, cv=None,
     y : array-like
         The target variable to try to predict in the case of
         supervised learning.
+        
+    data_train : np.array, optional
+        Data to train on, if data for training is different from X.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
