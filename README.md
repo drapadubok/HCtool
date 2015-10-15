@@ -48,4 +48,4 @@ pip install -r req.txt
 Pipelines can be changed, or new pipelines added. "pathway" parameter is used to select pipeline.
 Pipeline is selected in parallel.select_pipeline function.
 
-3) If running locally, or on different kind of cluster - don't use Job.job_submit method, and instead call the pipeline directly by running parallel.select_pipeline(path_to_pickled_cfg).
+3) If running locally, or on different kind of cluster - don't use Job.submit_job method, and instead call the pipeline directly by running parallel.select_pipeline(path_to_pickled_cfg).
