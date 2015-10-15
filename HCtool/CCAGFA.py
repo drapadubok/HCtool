@@ -1,5 +1,7 @@
 import numpy as np
 
+import readline
+
 import rpy2.robjects as ro
 import rpy2.robjects.numpy2ri
 from rpy2.robjects.packages import importr, quiet_require
@@ -18,13 +20,16 @@ class CCAGFA(object):
         self.userlibpath = userlibpath
         self.packages = packages
         self.repos = repos
-        makepath(self.userlibpath)
         self.r = ro.r
         
     def check_r_packages(self,install=False):
-        ''' Check installation of packages
+        ''' 
+        Generate userlibpath folder, check installation of packages, load if installed.
+        
         Parameters:
-        install - do these packages need to be installed first?'''
+        install - do these packages need to be installed first?
+        '''
+        makepath(self.userlibpath)
         utils = importr('utils')
         for item in self.packages:
             if install:
@@ -34,9 +39,16 @@ class CCAGFA(object):
     
     def fit_predict(self,data_test,data_train,crossval,K=50,save=1,ccafilepath=None):
         ''' 
-        K - number of components
-        save - should we save model, should we save the transformed data?
-        Can be improved so that it does fitting useing separate fit method, and predicting with separate predict, but not now
+        Fit CCAGFA model using R. Uses leave one out cross-validation.
+        Always trains on runs from data_train, and tests on runs from data_test.
+        
+        Input:
+        data_test: data used in testing
+        data_train: data used in training
+        crossval: cv object from sklearn
+        K: number of components
+        save: flag to save the model files
+        ccafilepath: where to save model
         '''
         self.r('opts <- getDefaultOpts()')
         self.r('opts$verbose=0')
@@ -57,7 +69,6 @@ class CCAGFA(object):
             self.r('ccapred = GFApred(c(0,1),list(0*dobs_test,dobs_test),ccafit,sample=F)$Y[[1]]')
             #predicted_data.append(np.array(self.r.ccapred.rx()))
 
-            ## Modification for testing
             predicted_data[test,:] = np.array(self.r.ccapred.rx())
           
             # Save the model
@@ -65,8 +76,6 @@ class CCAGFA(object):
                 i = i+1
                 self.r.writeMat('{0}_K{1}_cvi{2}.mat'.format(ccafilepath,K,i),ccafit=self.r.ccafit)
 
-        # Combine the data
-        #predicted_data = np.concatenate(predicted_data) 
         return predicted_data
 
 
@@ -74,15 +83,15 @@ class CCAGFA(object):
 #for i in range(crossval.n_unique_labels):
 #            data_generator = generate_r_data(data_test,data_train,crossval)
 #            dobs_train,dobs_test,dcls_train,dcls_test = data_generator.next()
-def generate_r_data(data_test,data_train,crossval):
-    ''' Make a generator of data for CCA'''
-    for train, test in crossval:
-        dobs_train = data_test[train,:]
-        dobs_test = data_test[test,:]
-        dcls_train = data_train[train,:]
-        dcls_test = data_train[test,:]
-        yield dobs_train,dobs_test,dcls_train,dcls_test            
-            
-def generate_cca_model(data_test,data_train):
-    ''' Make a generator of CCA models '''
-    raise NotImplemented
+#def generate_r_data(data_test,data_train,crossval):
+#    ''' Make a generator of data for CCA'''
+#    for train, test in crossval:
+#        dobs_train = data_test[train,:]
+#        dobs_test = data_test[test,:]
+#        dcls_train = data_train[train,:]
+#        dcls_test = data_train[test,:]
+#        yield dobs_train,dobs_test,dcls_train,dcls_test            
+#            
+#def generate_cca_model(data_test,data_train):
+#    ''' Make a generator of CCA models '''
+#    raise NotImplemented
