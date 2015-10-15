@@ -20,8 +20,8 @@ def save(accuracy = None, permutation_score = None,
         makepath(filepath)
         
         ## Save mean accuracy
-	with open('{0}accuracy.csv'.format(filepath),'w') as f:
-	    f.write('{0},{1:.2f},{2},{3:.2f}'.format('Accuracy',accuracy,'MaxPermAccuracy',np.max(permutation_score)))
+    with open('{0}accuracy.csv'.format(filepath),'w') as f:
+        f.write('{0},{1:.2f},{2},{3:.2f}'.format('Accuracy',accuracy,'MaxPermAccuracy',np.max(permutation_score)))
 
         ## Save permutation values
         np.savetxt('{0}permvals.txt'.format(filepath), permutation_score)
@@ -38,7 +38,7 @@ def save(accuracy = None, permutation_score = None,
         for i in range(impmap_2mm.get_data().shape[-1]):
             fname = '{0}coef{1}_2mm.nii'.format(filepath,i+1)
             nibabel.save(nibabel.Nifti1Image(impmap_2mm.get_data()[:,:,:,i],impmap_2mm.get_affine()),fname)
-	    	fname = '{0}coef{1}_4mm.nii'.format(filepath,i+1)
+            fname = '{0}coef{1}_4mm.nii'.format(filepath,i+1)
             nibabel.save(nibabel.Nifti1Image(impmap_4mm.get_data()[:,:,:,i],impmap_4mm.get_affine()),fname)
         
         # Searchlight scores
