@@ -13,7 +13,7 @@ from sklearn.metrics import confusion_matrix
 
 plt.ioff()
 
-def Classify(cls,labels,crossval,data_test,pathway,data_train=None,**kwargs):
+def classify(cls,labels,crossval,data_test,pathway,data_train=None,**kwargs):
         ''' Given cls and crossval scheme, get performance and predicted values.
         
         Params:
@@ -42,7 +42,7 @@ def Classify(cls,labels,crossval,data_test,pathway,data_train=None,**kwargs):
         return cv_scores,y_pred_all
         
         
-def GetCrossval(nrun,labels,**kwargs):
+def get_crossval(nrun,labels,**kwargs):
     '''Get selector for leave one label (run) out crossvalidation'''
     cvl = np.array([])
     for r in range(nrun):
@@ -52,7 +52,7 @@ def GetCrossval(nrun,labels,**kwargs):
     return crossval
     
 
-def GetImportanceMap(cls,labels,data_test,masker,**kwargs):
+def get_impmap(cls,labels,data_test,masker,**kwargs):
     ''' Importance map is built from dataset used in training.
     
     Params:
@@ -75,7 +75,7 @@ def GetImportanceMap(cls,labels,data_test,masker,**kwargs):
     return coef_img,coef_2mm
 
 
-def GetConfusionMatrix(y,yhat):
+def get_confmat(y,yhat):
     ''' Get confusion matrix 
     y - regressor
     yhat - predicted labels'''   
