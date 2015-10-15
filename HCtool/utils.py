@@ -1,6 +1,7 @@
 """
 Helper functions
 """
+import os
 from os import makedirs
 from os.path import normpath,dirname,exists,abspath
 
@@ -13,7 +14,34 @@ from nibabel import load, Nifti1Image
 
 from HCtool.fixdict import loadmat
 
-def LoadData(cfg):
+def fileparts_name(path):
+    '''
+    Get filename with path and extension stripped.
+
+    Input
+    path : full path to file
+
+    Output
+    filename : only the filename, without extension
+    '''
+    (path, file) = os.path.split(path)
+    filename = os.path.splitext(file)[0]
+    return filename
+    
+def load_data(cfg):
+    '''
+    Interface to loader function.
+    
+    Input
+    cfg : dictionary with all default parameters.
+    
+    Output
+    Returns output of loader function.
+    If pathway == 0 or 2, returns data_train and data_test dictionaries,
+    where data_train comes from cfg[subject_train], and data_test from
+    cfg[subject_test]
+    If pathway == 1, returns dictionary for subject_test
+    '''
     if cfg.get('pathway') == 1:
         # If single subject case, assume that it is receiver
         cfg.update(subject=cfg.get('subject_test'))
@@ -22,35 +50,48 @@ def LoadData(cfg):
         # if two subjects, first assume receiver, then transmitter
         # Receiver is always used in testing, transmitter only for training
         cfg.update(subject=cfg.get('subject_test'))
-        data_test = load_data(**cfg)
+        data_test = loader(**cfg)
         cfg.update(subject=cfg.get('subject_train'))
-        data_train = load_data(**cfg)
+        data_train = loader(**cfg)
         return data_train,data_test
         
         
-def LoadLabels(regressorpath,nrun,ncond,TR,convthresh,**kwargs):
-        """
-        Given parameters in cfg, return labels, selector to drop zeros and NTR
-        """
-        labels = loadmat(regressorpath)
-        NTR = list()
-        #separate_column_regressor = list()
-        regressor = list()
-        to_drop_zeros = list()
-        for i in range(nrun):
-            tempreg = labels['regressor']['run{0}'.format(i+1)]
-            NTR.append(tempreg.shape[0])
-            conds_conv = np.empty([NTR[i],ncond],dtype=float)
-            for c in range(ncond):
-                convreg = np.convolve(spm_hrf(TR),tempreg[:,c])[:NTR[i]]
-                convreg = convreg/max(convreg)
-                convreg[convreg < convthresh] = 0
-                conds_conv[:,c] = np.sign(convreg)
-            #separate_column_regressor.append(conds_conv)
-            regressor.append(conds_conv.nonzero()[1])#+1
-            to_drop_zeros.append(np.sum(conds_conv,axis=1))
-        regressor = np.concatenate(regressor)
-        return dict(regressor=regressor,to_drop_zeros=to_drop_zeros,NTR=NTR)
+def load_labels(regressorpath,nrun,ncond,TR,convthresh,**kwargs):
+    """
+    This implementation processses regressor with an assumption that it comes in a specific form.
+    Can be replaced with just anything, as long as it provides similar output.    
+    
+    Input
+    cfg : parameters in default cfg
+    
+    Returns a dictionary with following keys
+        to_drop_zeros : list, for each run, for each timepoint, 1 if has stimulus,
+        0 if no stimulus was present.
+    
+        regressor : list, labels for each timepoint over all runs
+        after no stimulus timepoints are removed.
+    
+        NTR : number of timepoints for each run
+    """
+    labels = loadmat(regressorpath)
+    NTR = list()
+    #separate_column_regressor = list()
+    regressor = list()
+    to_drop_zeros = list()
+    for i in range(nrun):
+        tempreg = labels['regressor']['run{0}'.format(i+1)]
+        NTR.append(tempreg.shape[0])
+        conds_conv = np.empty([NTR[i],ncond],dtype=float)
+        for c in range(ncond):
+            convreg = np.convolve(spm_hrf(TR),tempreg[:,c])[:NTR[i]]
+            convreg = convreg/max(convreg)
+            convreg[convreg < convthresh] = 0
+            conds_conv[:,c] = np.sign(convreg)
+        #separate_column_regressor.append(conds_conv)
+        regressor.append(conds_conv.nonzero()[1])#+1
+        to_drop_zeros.append(np.sum(conds_conv,axis=1))
+    regressor = np.concatenate(regressor)
+    return dict(regressor=regressor,to_drop_zeros=to_drop_zeros,NTR=NTR)
         
         
 def spm_hrf(TR,p=[6,16,1,1,6,0,32]):
@@ -84,19 +125,15 @@ def spm_hrf(TR,p=[6,16,1,1,6,0,32]):
     return hrf
     
     
-def wrap_mask(nii_img, nii_mask, downsample, target_affine):
-    ''' If downsample, downsample, mask and return, otherwise - just mask and return'''
-    nii_mask = _check_binary(nii_mask)
-    if downsample:
-        nii_img = resample_img(nii_img,target_affine=target_affine)
-        nii_mask = resample_img(nii_mask,target_affine=target_affine,interpolation='nearest')
-    masker = NiftiMasker(nii_mask,standardize=True)
-    nii_masked = masker.fit_transform(nii_img)
-    return nii_masked, nii_mask, masker
+def check_binary(img):
+    ''' Utility to binarize the mask.
     
+    Input
+    img: image to binarize (mask)
     
-def _check_binary(img):
-    ''' Utility to binarize the mask '''
+    Output:
+    img: binarized (0 = 0, all else = 1)
+    '''
     timg = img.get_data()
     timg = timg != 0 # binarize
     img = Nifti1Image(timg.astype(np.int),img.get_affine())
@@ -105,36 +142,67 @@ def _check_binary(img):
     
 def drop_labels(nii,to_drop_zeros):
     """
-    Drop the labelless timepoints
+    Drop the labelless timepoints.
+    
+    Input:
+    nii - functional data
+    to_drop_zeros - selector from load_labels
+    
+    Output:
+    nii - functional data with no_stimulus timepoints removed
     """
     nii = nii[:to_drop_zeros.shape[0],:] # trim to the length of label vector (assuming that file is longer than labels)
     nii = nii[to_drop_zeros==1] # keep only the labeled points
     return nii
 
 
-def load_data(anat,downsample,target_affine,
-             dataroot,subject,maskpath,nrun,
-             labels,**kwargs):
-    ''' Given parameters in cfg, return masked and concatenated over runs data '''
+def loader(anat, downsample, target_affine, dataroot, subject, maskpath, nrun,
+           niifilename, labels, **kwargs):
+    ''' 
+    All parameters are submitted as cfg dictionary.
+    Given parameters in cfg, return masked and concatenated over runs data 
+    
+    Input
+    anat: MNI template
+    downsample: 1 or 0
+    target_affine: downsampling matrix
+    dataroot: element of path to data
+    subject: folder in dataroot with subject data
+    maskpath: path to mask
+    nrun: number of runs
+    niifilename: how is the data file called
+    labels: labels from load_labels function
+    
+    Output
+    dict(nii_func=nii_func,nii_mean=nii_mean,masker=masker,nii_mask=nii_mask)
+    nii_func: 4D data
+    nii_mean: mean over 4th dimension
+    masker: masker object from nibabel
+    nii_mask: 3D mask
+    '''
     nii_func = list()
     for r in range(nrun):
-        fname = '{0}/{1}/run{2}/bramila/bramila/epi_STD_mask_detrend_fullreg.nii'.format(dataroot,subject,r+1) # Should remove hardcoding of the path
-        # Load all the data
+        fname = '{0}/{1}/run{2}/{3}'.format(dataroot, subject, r+1, niifilename) # Assumption about file location
         nii_img = load(fname, mmap=False)
         nii_img.set_sform(anat.get_sform())
-        # Get mean
+        # Get mean over 4D
         nii_mean = mean_img(nii_img)
-        # Mask
+        # Masking
         nii_mask = load(maskpath)
         nii_mask.set_sform(anat.get_sform())
-        # Mask the data
-        nii_img, nii_mask, masker = wrap_mask(nii_img,nii_mask,downsample,target_affine)
+        # Binarize the mask
+        nii_mask = check_binary(nii_mask)
+        if downsample:
+            nii_img = resample_img(nii_img, target_affine=target_affine)
+            nii_mask = resample_img(nii_mask, target_affine=target_affine, interpolation='nearest')
+        masker = NiftiMasker(nii_mask, standardize=True)
+        nii_img = masker.fit_transform(nii_img)
         # Drop zero timepoints, zscore
-        nii_img = drop_labels(nii_img,labels.get('to_drop_zeros')[r])
-        nii_func.append(stats.zscore(nii_img,axis=0)) # TEST, I want to zscore over time, which is first dimention here
+        nii_img = drop_labels(nii_img, labels.get('to_drop_zeros')[r])
+        nii_func.append(stats.zscore(nii_img, axis=0)) # zscore over time
     # throw data together
     nii_func = np.concatenate(nii_func)
-    return dict(nii_func=nii_func,nii_mean=nii_mean,masker=masker,nii_mask=nii_mask)
+    return dict(nii_func=nii_func, nii_mean=nii_mean, masker=masker, nii_mask=nii_mask)
 
 
 def makepath(path):
