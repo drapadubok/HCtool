@@ -70,6 +70,9 @@ def search_light(X, y, estimator, A, scoring=None, cv=None, n_jobs=-1,
 
     verbose : int, optional
         The verbosity level. Defaut is 0
+        
+    data_train : np.array, optional
+        Data to train on, if data for training is different from X.
 
     Returns
     -------
@@ -152,6 +155,9 @@ def _group_iter_search_light(list_rows, estimator, X, y,
 
     verbose : int, optional
         The verbosity level. Defaut is 0
+        
+    data_train : np.array, optional
+        Data to train on, if data for training is different from X.
 
     Returns
     -------
@@ -172,7 +178,7 @@ def _group_iter_search_light(list_rows, estimator, X, y,
                                                     y, cv=cv, n_jobs=1,
                                                     **kwargs))
         else:
-            # Here goes my modification
+            # Here goes my modification for separate datasets
             cv_scores = []
             for train, test in cv:
                 tempdat_train = data_train[train,:]
@@ -185,6 +191,7 @@ def _group_iter_search_light(list_rows, estimator, X, y,
                 yhat = estimator.predict(tempdat_test)
                 cv_scores.append(np.sum(yhat == y[test]) / float(np.size(y[test])))
             par_scores[i] = np.mean(cv_scores)
+            #
 
         if verbose > 0:
             # One can't print less than each 10 iterations
@@ -292,6 +299,9 @@ class SearchLight(BaseEstimator):
         y : 1D array-like
             Target variable to predict. Must have exactly as many elements as
             3D images in img.
+            
+        data_train : np.array, optional
+            Data to train on, if data for training is different from X.
 
         Attributes
         ----------
@@ -336,7 +346,9 @@ class SearchLight(BaseEstimator):
         estimator = self.estimator
         if isinstance(estimator, basestring):
             estimator = ESTIMATOR_CATALOG[estimator]()
-        # From here starts Dima's modifications, added nii_optional argumetn to .fit method
+        
+        # From here starts Dima's modifications, added nii_optional argument
+        # to .fit method
         if data_train is None:
             scores = search_light(X, y, estimator, A,
                                   self.scoring, self.cv, self.n_jobs,
@@ -350,15 +362,26 @@ class SearchLight(BaseEstimator):
         scores_3D[process_mask] = scores
         self.scores_ = scores_3D
         return self
-        
-def GetSearchLight(nii_mask,radius,masker,
-                   cls,crossval,labels,data_test,data_train=None,
+
+# Dima's modification, wrapper for SL object    
+def get_searchlight(nii_mask, radius, masker,
+                   cls, crossval, labels, data_test, data_train=None,
                    **kwargs):
     ''' 
-    Construct the searchlight object, run the corresponding analysis.
-    Params:
+    Construct the searchlight object, fit the model.
+    
+    Input: 
+    nii_mask: ROI mask
+    radius: searchlight sphere radius
+    masker: nibabel masker object
+    cls: classifier from sklearn (requires fit and predict methods)
+    crossval: cv object from sklearn
+    labels: labels from load_labels
+    data_test: data used in testing
+    data_train: data used in training
     
     Output:
+    sl_image: searchlight accuracy image
     '''
     sl_object = SearchLight(mask_img=nii_mask,
                             radius=radius,
