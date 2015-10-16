@@ -99,8 +99,8 @@ def select_pipeline(cfgname):
     elif cfg['pathway'] == 2:
         results = Pipelines.Betweenclass(cfg)
     #### Save results in a picke object
-    print('Results returned, saving them to {0}'.format(cfg.outdir))
-    results.update(filepath=cfg.outdir)
+    print('Results returned, saving them to {0}'.format(cfg.get('outdir')))
+    results.update(filepath=cfg.get('outdir'))
     Saver.save(**results)
     print('Results saved')
     
