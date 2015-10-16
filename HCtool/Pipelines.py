@@ -18,7 +18,7 @@ def SingleSubject(cfg):
     '''
 
     ## Get crossval scheme, can modify here later if we have variable schemes
-    crossval = Analysis.GetCrossval(**cfg)
+    crossval = Analysis.get_crossval(**cfg)
     cfg.update(crossval=crossval)    
     print('Crossval  acquired')
 
@@ -31,23 +31,23 @@ def SingleSubject(cfg):
     print('Data loaded')
     
     ## CLassify
-    cv_scores,y_pred_all = Analysis.Classify(**cfg)
-    coef_img,coef_2mm = Analysis.GetImportanceMap(**cfg)    
+    cv_scores,y_pred_all = Analysis.classify(**cfg)
+    coef_img,coef_2mm = Analysis.get_impmap(**cfg)    
     print('Classification done')
 
     ## Searchlight
-    sl_4mm = slight.GetSearchLight(**cfg)
+    sl_4mm = slight.get_searchlight(**cfg)
     # Upsample
     sl_2mm = resample_img(sl_4mm,target_affine = np.diag((2,2,2)))
     print('Searchlight done')
     
     ##  Permutations
-    null_cv_scores = Permutations.GetPermutations(**cfg)
+    null_cv_scores = Permutations.get_permutations(**cfg)
     null_plot = Permutations.plot_permutation(null_cv_scores)       
     print('Permutations done and plotted')
 
     ## Confmat
-    cm = Analysis.GetConfusionMatrix(cfg.get('labels').get('regressor'),y_pred_all)
+    cm = Analysis.get_confmat(cfg.get('labels').get('regressor'),y_pred_all)
     cm_plot = Analysis.plot_confusion_matrix(cm)    
     print('Confmat done and plotted')
 
@@ -142,7 +142,7 @@ def Betweenclass(cfg):
     '''
     
     ## Get crossval scheme, can modify here later if we have variable schemes
-    crossval = Analysis.GetCrossval(**cfg)
+    crossval = Analysis.get_crossval(**cfg)
     cfg.update(crossval=crossval)  
     print('Crossval  acquired')
     
@@ -155,17 +155,17 @@ def Betweenclass(cfg):
     print('Data loaded')
                
     ## CLassify
-    cv_scores,y_pred_all = Analysis.Classify(**cfg)
-    coef_img,coef_2mm = Analysis.GetImportanceMap(**cfg)   
+    cv_scores,y_pred_all = Analysis.classify(**cfg)
+    coef_img,coef_2mm = Analysis.get_impmap(**cfg)   
     print('Classification done')
     
     ##  Permutations
-    null_cv_scores = Permutations.GetPermutations(**cfg)
+    null_cv_scores = Permutations.get_permutations(**cfg)
     null_plot = Permutations.plot_permutation(null_cv_scores)         
     print('Permutations done and plotted')
     
     ## Confmat
-    cm = Analysis.GetConfusionMatrix(cfg.get('labels').get('regressor'),y_pred_all)
+    cm = Analysis.get_confmat(cfg.get('labels').get('regressor'),y_pred_all)
     cm_plot = Analysis.plot_confusion_matrix(cm)
     print('Confmat done and plotted')
 
