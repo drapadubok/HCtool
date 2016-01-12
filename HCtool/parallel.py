@@ -98,6 +98,8 @@ def select_pipeline(cfgname):
         results = Pipelines.Hyperclass(cfg)
     elif cfg['pathway'] == 2:
         results = Pipelines.Betweenclass(cfg)
+    elif cfg['pathway'] == 3:
+        results = Pipelines.Sonya_hyperclass(cfg)
     #### Save results in a picke object
     print('Results returned, saving them to {0}'.format(cfg.get('outdir')))
     results.update(filepath=cfg.get('outdir'))

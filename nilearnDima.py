@@ -114,7 +114,8 @@ OBSERVERS = ('Sonya_Observer',
 
 ACTORS = ('Sonya_Actor', 'Fanny_Actor')
 
-MASKS = ('/triton/becs/scratch/braindata/shared/GraspHyperScan/Bayes/masks/ns/grasp.nii',
+MASKS = ('/triton/becs/scratch/braindata/shared/GraspHyperScan/Bayes/masks/localizer/lBroca.nii',
+         '/triton/becs/scratch/braindata/shared/GraspHyperScan/Bayes/masks/ns/grasp.nii',
          '/triton/becs/scratch/braindata/shared/GraspHyperScan/Bayes/masks/LOC.nii',
          '/triton/becs/scratch/braindata/shared/GraspHyperScan/Bayes/masks/MOTOR.nii',
          '/triton/becs/scratch/braindata/shared/GraspHyperScan/Bayes/masks/fsl/ROIvalidation/cingulum/cingularROI.nii',
